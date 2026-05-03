@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>لأجمل غودي 💖</title>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+    <style>
+        body, html {
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            font-family: sans-serif; overflow: hidden; background-color: #ffeef0;
+            touch-action: manipulation;
+        }
+
+        .screen {
+            position: fixed; top: 0; left: 0;
+            width: 100%; height: 100%;
+            display: none; flex-direction: column;
+            justify-content: center; align-items: center;
+            text-align: center;
+        }
+
+        /* شاشة البداية ظاهرة تلقائياً */
+        #welcome-screen { display: flex; background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%); z-index: 999; }
+        
+        #game-screen { background-color: #fff5f6; z-index: 100; }
+        #apology-screen { background: #fff0f3; z-index: 1000; }
+        #proposal-screen { background: white; z-index: 1100; }
+        #celebration-screen { background: white; z-index: 1200; }
+
+        .card {
+            background: white; padding: 25px; border-radius: 20px;
+            width: 85%; border: 3px solid #ff758c; box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+
+        .btn {
+            background: #ff758c; color: white; border: none; padding: 15px 30px;
+            font-size: 1.2rem; border-radius: 50px; cursor: pointer; margin-top: 20px;
+            font-weight: bold; width: 100%; max-width: 250px;
+            display: inline-block; -webkit-appearance: none;
+        }
+
+        .blood-drop { position: absolute; font-size: 50px; z-index: 150; user-select: none; }
+        .score-board { position: absolute; top: 40px; font-size: 1.4rem; color: #c0392b; font-weight: bold; width: 100%; z-index: 200; pointer-events: none; }
+        
+        .btn-yes { background: #2ecc71; margin-bottom: 10px; }
+        .btn-no { background: #95a5a6; }
+    </style>
+</head>
+<body>
+
+    <!-- 1. شاشة الترحيب -->
+    <div id="welcome-screen" class="screen">
+        <div class="card">
+            <h1 style="color:#d63031;">هلا غودي أميرتي 👸🏻</h1>
+            <p>وصلي لـ 20 نقطة يا جميلة عشان ترتاحين من الأيوووو..</p>
+            <!-- استخدمت onclick و ontouchend لضمان الاستجابة في الجوال -->
+            <button class="btn" onclick="startTheGame()" ontouchend="startTheGame()">ابدئي الهجوم 🩸</button>
+        </div>
+    </div>
+
+    <!-- 2. شاشة اللعبة -->
+    <div id="game-screen" class="screen">
+        <div class="score-board">تم الإبادة: <span id="score-val">0</span> / 20</div>
+    </div>
+
+    <!-- 3. شاشة الاعتذار -->
+    <div id="apology-screen" class="screen">
+        <div class="card">
+            <h1>أنا أسف يا جميلة ❤️</h1>
+            <p>بكل أسف.. ما كان قصدي كل هذا، وأتمنى تقبلين اعتذاري.. هذي لعبة بسيطة عشان تقتلين الدورة الكلبه.</p>
+            <h2 style="color: #ff4757;">أنا أحبك يا أم عيالي ❤️</h2>
+            <button class="btn" onclick="showScreen('proposal-screen')">سؤال أخير.. </button>
+        </div>
+    </div>
+
+    <!-- 4. شاشة السؤال -->
+    <div id="proposal-screen" class="screen">
+        <div class="card">
+            <h2 style="font-size: 1.2rem;">ممكن تصيرين حبيبتي وأم لعيالي وزوجتي وقلبي ودلوعي وأميرتي وروحي وكل دنياي؟</h2>
+            <button class="btn btn-yes" onclick="startCelebration()">ايوه انا حبيبتك</button>
+            <button id="no-btn" class="btn btn-no" onclick="moveButton(event)" ontouchstart="moveButton(event)">لا </button>
+        </div>
+    </div>
+
+    <!-- 5. شاشة الاحتفال -->
+    <div id="celebration-screen" class="screen">
+        <div style="font-size: 100px;">❤️</div>
+        <h1 style="color:#d63031;">أحبك يا أحلى غودي!</h1>
+        <p>يا زوجتي وأميرتي وكل حياتي 💍❤️</p>
+    </div>
+
+    <script>
+        let score = 0;
+        const target = 20;
+
+        function showScreen(id) {
+            // إخفاء كل شيء وإظهار المطلوب
+            const screens = document.querySelectorAll('.screen');
+            screens.forEach(s => s.style.display = 'none');
+            document.getElementById(id).style.display = 'flex';
+        }
+
+        function startTheGame() {
+            showScreen('game-screen');
+            // تأخير بسيط لبدء النزول عشان الشاشة تلحق تتحول
+            setTimeout(spawnInitial, 500);
+        }
+
+        function spawnInitial() {
+            for(let i=0; i<4; i++) {
+                setTimeout(spawnDrop, i * 800);
+            }
+        }
+
+        function spawnDrop() {
+            if (score >= target) return;
+            const gameArea = document.getElementById('game-screen');
+            const drop = document.createElement('div');
+            drop.className = 'blood-drop';
+            drop.innerHTML = '🩸';
+            
+            // تحديد مكان عشوائي
+            let x = Math.random() * (window.innerWidth - 60);
+            drop.style.left = x + 'px';
+            drop.style.top = '-60px';
+            gameArea.appendChild(drop);
+
+            let top = -60;
+            let speed = 4 + Math.random() * 3;
+
+            const anim = setInterval(() => {
+                top += speed;
+                drop.style.top = top + 'px';
+
+                if (top > window.innerHeight) {
+                    clearInterval(anim);
+                    if(drop.parentNode) gameArea.removeChild(drop);
+                    if(score < target) spawnDrop();
+                }
+            }, 20);
+
+            // وظيفة التفجير
+            const explode = (e) => {
+                if(e) e.preventDefault();
+                score++;
+                document.getElementById('score-val').innerText = score;
+                clearInterval(anim);
+                drop.innerHTML = '💥';
+                setTimeout(() => {
+                    if(drop.parentNode) gameArea.removeChild(drop);
+                    if (score < target) {
+                        spawnDrop();
+                    } else {
+                        showScreen('apology-screen');
+                    }
+                }, 150);
+            };
+
+            drop.addEventListener('touchstart', explode);
+            drop.addEventListener('click', explode);
+        }
+
+        function moveButton(e) {
+            if(e) e.preventDefault();
+            const btn = document.getElementById('no-btn');
+            const newX = Math.random() * (window.innerWidth - 100);
+            const newY = Math.random() * (window.innerHeight - 100);
+            btn.style.position = 'fixed';
+            btn.style.left = newX + 'px';
+            btn.style.top = newY + 'px';
+        }
+
+        function startCelebration() {
+            showScreen('celebration-screen');
+            // احتفال مستمر لمدة 10 ثواني
+            let end = Date.now() + (10 * 1000);
+            (function frame() {
+                confetti({ particleCount: 7, angle: 60, spread: 55, origin: { x: 0 }, colors: ['#ff758c', '#ffffff'] });
+                confetti({ particleCount: 7, angle: 120, spread: 55, origin: { x: 1 }, colors: ['#ff758c', '#ffffff'] });
+                if (Date.now() < end) requestAnimationFrame(frame);
+            }());
+        }
+    </script>
+</body>
+</html>
